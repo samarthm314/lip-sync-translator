@@ -169,8 +169,12 @@ function App() {
       webrtcService?.sendAudio(audioBlob);
 
       // Process audio locally for transcript
-      const audioData = await audioBlob.arrayBuffer();
-      const transcript = await sttService?.transcribe(audioData, languageManager?.getSourceLanguage().code);
+      const audioBuffer = await audioBlob.arrayBuffer();
+      const audioData = new Float32Array(audioBuffer);
+      const transcript = await sttService?.transcribe(
+        audioData,
+        languageManager?.getSourceLanguage().code
+      );
       
       if (transcript) {
         addTranscript(transcript, 'local', languageManager?.getSourceLanguage().code);
@@ -410,3 +414,5 @@ function App() {
 }
 
 export default App; 
+
+
