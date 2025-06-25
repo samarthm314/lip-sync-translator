@@ -9,7 +9,7 @@ export class MTService {
     this.session = null;
     this.isInitialized = false;
     this.tokenizer = null;
-    this.modelPath = '/wasm/marian-mt-en-es.onnx';
+    this.modelPath = '/wasm/marian-encoder.onnx';
     this.vocabPath = '/wasm/marian-vocab.json';
     this.vocab = null;
   }
@@ -21,19 +21,39 @@ export class MTService {
     try {
       console.log('Initializing MT service...');
       
+      // Check if ONNX runtime is available
+      if (typeof ort === 'undefined') {
+        throw new Error('ONNX runtime not available');
+      }
+      
       // Load vocabulary
       const vocabResponse = await fetch(this.vocabPath);
+      if (!vocabResponse.ok) {
+        throw new Error('Failed to load vocabulary');
+      }
       this.vocab = await vocabResponse.json();
       
       // Load ONNX model
       const modelResponse = await fetch(this.modelPath);
+      if (!modelResponse.ok) {
+        throw new Error('Failed to load model');
+      }
       const modelBuffer = await modelResponse.arrayBuffer();
       
-      // Create ONNX session
-      this.session = await ort.InferenceSession.create(modelBuffer, {
+      // Create ONNX session with timeout
+      const sessionPromise = ort.InferenceSession.create(modelBuffer, {
         executionProviders: ['wasm'],
-        graphOptimizationLevel: 'all'
+        graphOptimizationLevel: 'all',
+        enableCpuMemArena: false,
+        enableMemPattern: false
       });
+      
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('ONNX initialization timeout')), 10000);
+      });
+      
+      this.session = await Promise.race([sessionPromise, timeoutPromise]);
       
       this.isInitialized = true;
       console.log('MT service initialized successfully');
@@ -306,5 +326,12 @@ export class DictionaryMT {
       this.dictionaries[dictKey] = {};
     }
     this.dictionaries[dictKey][source.toLowerCase()] = target.toLowerCase();
+  }
+
+  /**
+   * Cleanup resources (no-op for dictionary fallback)
+   */
+  cleanup() {
+    // No resources to clean up for dictionary fallback
   }
 } 

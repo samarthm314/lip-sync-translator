@@ -8,7 +8,7 @@ import CallUI from './components/CallUI.jsx';
 import { AudioCapture, AudioPlayback } from './utils/audioUtils.js';
 import { STTService, WebSpeechSTT } from './services/stt.js';
 import { MTService, DictionaryMT } from './services/mt.js';
-import { TTSService, WebSpeechTTS } from './services/tts.js';
+import { TTSService } from './services/tts.js';
 import { WebRTCService } from './services/webrtc.js';
 import { LipSyncService } from './services/lipSync.js';
 import { LanguageManager } from './models/Language.js';
@@ -41,6 +41,27 @@ function App() {
   useEffect(() => {
     initializeServices();
   }, []);
+
+  // Set up Web Speech API transcription when using fallback
+  useEffect(() => {
+    if (sttService && sttService instanceof WebSpeechSTT) {
+      // Set up continuous transcription
+      sttService.initialize((transcript) => {
+        if (transcript && transcript.trim()) {
+          console.log('Web Speech API transcript:', transcript);
+          addTranscript(transcript, 'local', languageManager?.getSourceLanguage().code);
+          
+          // Process translation
+          handleTranslation(transcript);
+        }
+      });
+      
+      // Start listening when recording starts
+      if (isRecording) {
+        sttService.start();
+      }
+    }
+  }, [sttService, isRecording, languageManager]);
 
   const initializeServices = async () => {
     try {
@@ -80,8 +101,9 @@ function App() {
         tts = new TTSService();
         await tts.initialize();
       } catch (error) {
-        console.warn('ONNX TTS failed, using Web Speech API fallback');
-        tts = new WebSpeechTTS();
+        console.warn('TTS initialization failed:', error);
+        // TTSService now handles Web Speech API internally, so we don't need a separate fallback
+        tts = new TTSService();
         await tts.initialize();
       }
 
@@ -104,6 +126,37 @@ function App() {
     } catch (error) {
       console.error('Failed to initialize services:', error);
       setError('Failed to initialize application. Please refresh the page.');
+    }
+  };
+
+  // Handle translation processing
+  const handleTranslation = async (transcript) => {
+    try {
+      const translated = await mtService?.translate(
+        transcript,
+        languageManager?.getSourceLanguage().code,
+        languageManager?.getTargetLanguage().code
+      );
+      
+      if (translated) {
+        addTranslation(transcript, translated);
+        
+        // Generate speech
+        const audio = await ttsService?.synthesize(translated, languageManager?.getTargetLanguage().code);
+        if (audio) {
+          // Play translated audio
+          await audioPlayback?.playAudio(audio);
+          
+          // Generate lip-sync
+          const visemeSequence = lipSyncService?.generateLipSyncFromText(
+            translated,
+            languageManager?.getTargetLanguage().code
+          );
+          lipSyncService?.startLipSync(visemeSequence);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing translation:', error);
     }
   };
 
@@ -224,12 +277,22 @@ function App() {
   const startRecording = () => {
     audioCapture?.startRecording();
     setIsRecording(true);
+    
+    // Start Web Speech API if using fallback
+    if (sttService && sttService instanceof WebSpeechSTT) {
+      sttService.start();
+    }
   };
 
   // Stop recording
   const stopRecording = () => {
     audioCapture?.stopRecording();
     setIsRecording(false);
+    
+    // Stop Web Speech API if using fallback
+    if (sttService && sttService instanceof WebSpeechSTT) {
+      sttService.stop();
+    }
   };
 
   // Change avatar
@@ -241,6 +304,11 @@ function App() {
   const changeLanguage = (sourceCode, targetCode) => {
     languageManager?.setSourceLanguage(sourceCode);
     languageManager?.setTargetLanguage(targetCode);
+    
+    // Update Web Speech API language if using fallback
+    if (sttService && sttService instanceof WebSpeechSTT) {
+      sttService.setLanguage(sourceCode);
+    }
   };
 
   // Cleanup on unmount

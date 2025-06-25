@@ -22,6 +22,27 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['three', 'onnxruntime-web', 'simple-peer']
+    include: ['three', 'onnxruntime-web', 'simple-peer'],
+    needsInterop: ['onnxruntime-web', 'simple-peer']
+  },
+  define: {
+    global: 'globalThis',
+    'process.env': {},
+    'process.version': '"v16.0.0"',
+    'process.platform': '"browser"',
+    'process.stdout': 'null',
+    'process.stderr': 'null',
+    'process.stdin': 'null',
+    'process.nextTick': '(cb) => setTimeout(cb, 0)',
+    'process.browser': 'true',
+    'process.node': 'false'
+  },
+  resolve: {
+    alias: {
+      'events': 'events',
+      'util': 'util',
+      'buffer': 'buffer',
+      'process': 'process'
+    }
   }
 }) 

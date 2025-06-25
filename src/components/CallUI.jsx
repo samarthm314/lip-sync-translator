@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Phone, PhoneOff, Mic, MicOff, Wifi, WifiOff, Users } from 'lucide-react';
 
 function CallUI({ 
@@ -224,7 +224,7 @@ function CallUI({
 function CallTimer({ isActive }) {
   const [seconds, setSeconds] = useState(0);
 
-  React.useEffect(() => {
+  useEffect(() => {
     let interval = null;
     if (isActive) {
       interval = setInterval(() => {

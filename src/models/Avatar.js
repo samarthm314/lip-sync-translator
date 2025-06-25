@@ -14,6 +14,17 @@ export const AVATAR_MODELS = {
     position: { x: 0, y: 0, z: 0 },
     rotation: { x: 0, y: 0, z: 0 }
   },
+  'avatar1': {
+    id: 'avatar1',
+    name: 'Custom Avatar',
+    path: '/models/avatar1.glb',
+    thumbnail: null,
+    description: 'Your custom GLB avatar',
+    features: ['lip-sync'],
+    scale: 1.0,
+    position: { x: 0, y: 0, z: 0 },
+    rotation: { x: 0, y: 0, z: 0 }
+  },
   'professional': {
     id: 'professional',
     name: 'Professional',

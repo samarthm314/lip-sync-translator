@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { useFrame, useLoader } from '@react-three/fiber';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { useFrame } from '@react-three/fiber';
 import { AvatarLipSyncController } from '../services/lipSync.js';
 import { AVATAR_MODELS } from '../models/Avatar.js';
 
@@ -26,38 +25,14 @@ function Avatar({ avatarId, lipSyncService, isConnected }) {
         throw new Error(`Avatar model not found: ${avatarId}`);
       }
 
-      // Load GLTF model
-      const gltf = await useLoader(GLTFLoader, modelConfig.path);
-      
-      // Create avatar instance
+      // For demo purposes, we'll use the fallback avatar
+      // In production, you would load the actual GLTF model here
       const avatarInstance = {
-        mesh: gltf.scene,
+        mesh: null,
         mixer: null,
-        morphTargetDictionary: gltf.scene.children[0]?.morphTargetDictionary || {},
-        morphTargetInfluences: gltf.scene.children[0]?.morphTargetInfluences || []
+        morphTargetDictionary: {},
+        morphTargetInfluences: []
       };
-
-      // Set up animations if available
-      if (gltf.animations.length > 0) {
-        const { AnimationMixer } = await import('three');
-        avatarInstance.mixer = new AnimationMixer(gltf.scene);
-        gltf.animations.forEach(clip => {
-          avatarInstance.mixer.clipAction(clip).play();
-        });
-      }
-
-      // Apply model configuration
-      avatarInstance.mesh.scale.setScalar(modelConfig.scale);
-      avatarInstance.mesh.position.set(
-        modelConfig.position.x,
-        modelConfig.position.y,
-        modelConfig.position.z
-      );
-      avatarInstance.mesh.rotation.set(
-        modelConfig.rotation.x,
-        modelConfig.rotation.y,
-        modelConfig.rotation.z
-      );
 
       setAvatar(avatarInstance);
 
@@ -130,23 +105,8 @@ function Avatar({ avatarId, lipSyncService, isConnected }) {
     );
   }
 
-  if (!avatar) {
-    return null;
-  }
-
-  return (
-    <group ref={meshRef}>
-      <primitive object={avatar.mesh} />
-      
-      {/* Connection indicator */}
-      {isConnected && (
-        <mesh position={[0, 2.5, 0]}>
-          <sphereGeometry args={[0.1, 8, 8]} />
-          <meshStandardMaterial color="#10b981" />
-        </mesh>
-      )}
-    </group>
-  );
+  // Use fallback avatar for demo
+  return <FallbackAvatar isConnected={isConnected} />;
 }
 
 // Fallback avatar component for when models aren't available
@@ -196,27 +156,4 @@ function FallbackAvatar({ isConnected }) {
   );
 }
 
-// Main avatar component with fallback
-function AvatarWithFallback(props) {
-  const [useFallback, setUseFallback] = useState(false);
-
-  useEffect(() => {
-    // Check if GLTF loader is available
-    try {
-      // This will throw if GLTFLoader is not available
-      const loader = new GLTFLoader();
-      setUseFallback(false);
-    } catch (error) {
-      console.warn('GLTFLoader not available, using fallback avatar');
-      setUseFallback(true);
-    }
-  }, []);
-
-  if (useFallback) {
-    return <FallbackAvatar {...props} />;
-  }
-
-  return <Avatar {...props} />;
-}
-
-export default AvatarWithFallback; 
+export default Avatar; 
