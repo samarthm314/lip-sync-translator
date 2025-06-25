@@ -1,0 +1,16 @@
+This directory contains ONNX/WASM models for:
+- Speech-to-Text (Whisper)
+- Machine Translation (Marian)
+- Text-to-Speech (Tacotron2)
+
+For the demo, the application will use fallback services:
+- Web Speech API for STT/TTS
+- Dictionary-based translation
+
+To use real ONNX models, download and place them here:
+- whisper-tiny.onnx
+- whisper-vocab.json
+- marian-mt-en-es.onnx
+- marian-vocab.json
+- tacotron2-tts.onnx
+- tacotron2-vocab.json 

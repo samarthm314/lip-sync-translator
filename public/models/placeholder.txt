@@ -1,0 +1,18 @@
+This directory contains 3D avatar models in GLB format.
+
+For the demo, the application will use a fallback avatar.
+
+To use real 3D avatars, download and place them here:
+- default-avatar.glb
+- default-avatar-thumb.jpg
+- professional-avatar.glb
+- professional-avatar-thumb.jpg
+- casual-avatar.glb
+- casual-avatar-thumb.jpg
+- cartoon-avatar.glb
+- cartoon-avatar-thumb.jpg
+
+Avatar models should include:
+- Morph targets for lip-sync (viseme_aa, viseme_ih, etc.)
+- Basic animations
+- Proper scaling and positioning 
