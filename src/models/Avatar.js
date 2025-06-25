@@ -1,6 +1,7 @@
 /**
  * Avatar model definitions
  */
+import * as THREE from 'three';
 
 export const AVATAR_MODELS = {
   'default': {
@@ -312,3 +313,5 @@ export class AvatarManager {
     this.currentAvatar = null;
   }
 } 
+
+
